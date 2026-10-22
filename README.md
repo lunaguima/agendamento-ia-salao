@@ -4,7 +4,7 @@ Atividade da disciplina **Java Advanced (2º semestre) – FIAP**.
 
 Sistema de agendamento para um salão de beleza em que o cliente conversa em linguagem natural com um assistente de IA para **agendar, cancelar e reagendar** serviços. O assistente usa **Tools** (function calling) para executar as ações e **RAG** (vector database) para responder dúvidas com base nas regras do estabelecimento.
 
-- **Aluno:** _Luna de Carvalho Guimarães_ – RM 562290
+- **Aluno:** Luna de Carvalho Guimarães – RM 562290
 - **Repositório base:** https://github.com/joaocarloslima/agendamento-ia
 
 ---
@@ -14,6 +14,7 @@ Sistema de agendamento para um salão de beleza em que o cliente conversa em lin
 | Camada | Tecnologia |
 |---|---|
 | Linguagem / Framework | Java, Spring Boot |
+| Build | Gradle (wrapper incluído) |
 | IA | Spring AI + OpenAI (`gpt-4o-mini`) |
 | Embeddings | `text-embedding-3-small` (1536 dimensões) |
 | Vector store | PostgreSQL + **pgvector** |
@@ -51,8 +52,8 @@ br.com.fiap.agendamentocomia
 1. O usuário envia a mensagem em `ChatView`.
 2. `ChatService` monta o *system prompt* com a data/hora atuais (para interpretar "amanhã", "sexta" etc.).
 3. Os *advisors* entram em ação:
-    - `MessageChatMemoryAdvisor`: histórico da conversa.
-    - `QuestionAnswerAdvisor`: busca no pgvector os trechos de regras relevantes.
+   - `MessageChatMemoryAdvisor`: histórico da conversa.
+   - `QuestionAnswerAdvisor`: busca no pgvector os trechos de regras relevantes.
 4. O modelo decide se chama alguma ferramenta de `AppointmentTool`.
 5. A ferramenta valida as regras e persiste no banco; a resposta volta ao chat.
 
@@ -108,15 +109,15 @@ Na inicialização (`ApplicationRunner`), o arquivo `src/main/resources/doc/regr
 
 ### Pré-requisitos
 
-- JDK compatível com o projeto e Maven
-- PostgreSQL com a extensão **pgvector** (ex.: via Docker)
+- JDK compatível com o projeto (o Gradle wrapper já está incluído)
+- Docker (para o PostgreSQL com pgvector)
 - Chave de API da OpenAI
 
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/joaocarloslima/agendamento-ia.git
-cd agendamento-ia
+git clone https://github.com/lunaguima/agendamento-ia-salao.git
+cd agendamento-ia-salao
 ```
 
 ### 2. Configurar a chave da API
@@ -131,20 +132,24 @@ export OPENAI_API_KEY="sua-chave"
 $env:OPENAI_API_KEY="sua-chave"
 ```
 
-### 3. Configurar o banco
+### 3. Subir o banco de dados
 
-Configure no `application.properties` a conexão com o seu PostgreSQL (`spring.datasource.url`, `username` e `password`). Exemplo de container com pgvector:
+O projeto possui um `compose.yaml` na raiz que define o PostgreSQL com pgvector (`pgvector/pgvector:pg16`, container `pgvector-agendamento`, porta `5432`, banco `mydatabase`). Para subir:
 
 ```bash
-docker run -d --name pgvector -p 5432:5432 \
-  -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=agendamento \
-  pgvector/pgvector:pg16
+docker compose up -d
 ```
+
+O compose usa o label `org.springframework.boot.service-connection=postgres`, então o Spring Boot detecta a conexão com o container automaticamente. Não é necessário configurar `spring.datasource.*` no `application.properties`.
 
 ### 4. Rodar
 
 ```bash
-./mvnw spring-boot:run
+# Linux/macOS
+./gradlew bootRun
+
+# Windows (PowerShell)
+.\gradlew bootRun
 ```
 
 O navegador abre automaticamente (`vaadin.launch-browser=true`). Rotas:
